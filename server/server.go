@@ -1700,6 +1700,25 @@ func ProcessCommandLineArgs(cmd *flag.FlagSet) (showVersion bool, showHelp bool,
 	return false, false, nil
 }
 
+// systemd readiness notification support
+func SdNotify(msg []byte) {
+	socket := os.Getenv("NOTIFY_SOCKET")
+	if socket == "" {
+		return
+	}
+
+	conn, err := net.DialUnix("unixgram", nil, &net.UnixAddr{
+		Net:  "unixgram",
+		Name: socket,
+	})
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+
+	_, _ = conn.Write(msg)
+}
+
 // Public version.
 func (s *Server) Running() bool {
 	return s.isRunning()

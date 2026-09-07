@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/nats-io/nats-server/v2/server"
 )
@@ -130,6 +131,13 @@ func main() {
 	if err := server.Run(s); err != nil {
 		server.PrintAndDie(err.Error())
 	}
+
+	for i:=0; !s.ReadyForConnections(10 * time.Second); i+=1 {
+		status := fmt.Sprintf("Still not ready for connections (%d)... waiting.", i)
+		s.Noticef(status)
+		server.SdNotify([]byte("STATUS=" + status))
+	}
+	server.SdNotify([]byte("STATUS=Ready.\nREADY=1"))
 
 	s.WaitForShutdown()
 }
